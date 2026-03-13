@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>深海进化：全自由像素版</title>
+    <style>
+        :root { --accent: #00f2ff; }
+        body {
+            margin: 0; background-color: #020b1a; color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; touch-action: none; user-select: none;
+        }
+        canvas { display: block; image-rendering: pixelated; }
+
+        /* UI 容器 */
+        #game-ui {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; padding: 20px; box-sizing: border-box;
+        }
+
+        /* 菜单与结算浮层 */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0, 10, 30, 0.9); z-index: 1000; pointer-events: auto;
+        }
+
+        /* 成长记录 */
+        #log-container {
+            width: 150px; background: rgba(255, 255, 255, 0.05);
+            padding: 10px; border-radius: 8px; border-left: 3px solid var(--accent);
+            pointer-events: auto; max-height: 40%; overflow-y: auto;
+        }
+        .log-item { font-size: 12px; margin-bottom: 5px; color: #888; border-bottom: 1px solid #222; }
+        .log-item.highlight { color: var(--accent); font-weight: bold; }
+
+        /* 按钮样式 */
+        .btn-group { display: flex; flex-direction: column; gap: 15px; margin-top: 25px; }
+        button {
+            padding: 15px 40px; border: none; border-radius: 50px; cursor: pointer;
+            font-weight: bold; font-size: 18px; transition: 0.3s; color: white;
+        }
+        .btn-1 { background: #2ecc71; } .btn-2 { background: #f39c12; } .btn-3 { background: #e74c3c; }
+        button:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
+
+        #score-display { font-size: 24px; font-weight: bold; color: var(--accent); text-shadow: 0 0 10px rgba(0,242,255,0.5); }
+    </style>
+</head>
+<body>
+
+    <div id="start-menu" class="overlay">
+        <h1 style="letter-spacing: 5px; color: var(--accent);">深海进化</h1>
+        <p style="color: #666;">点击屏幕任何位置，小鱼就会游向哪里</p>
+        <div class="btn-group">
+            <button class="btn-1" onclick="initGame(0.7)">简单模式</button>
+            <button class="btn-2" onclick="initGame(1.0)">普通模式</button>
+            <button class="btn-3" onclick="initGame(2.0)">终极挑战</button>
+        </div>
+    </div>
+
+    <div id="restart-menu" class="overlay" style="display: none;">
+        <h2 id="result-text" style="font-size: 40px;">游戏结束</h2>
+        <p id="final-score" style="font-size: 20px;"></p>
+        <button class="btn-2" onclick="showStartMenu()">重新开始</button>
+    </div>
+
+    <div id="game-ui">
+        <div style="display: flex; justify-content: space-between;">
+            <div id="score-display">积分: 0 / 100</div>
+        </div>
+        <div id="log-container">
+            <div style="font-size: 14px; margin-bottom: 8px; color: #fff;">成长里程碑:</div>
+            <div id="logs"></div>
+        </div>
+    </div>
+
+    <canvas id="mainCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const logsEl = document.getElementById('logs');
+
+let state = {
+    score: 0,
+    isRunning: false,
+    difficulty: 1,
+    enemies: [],
+    particles: [],
+    animId: null
+};
+
+let player = {
+    x: 0, y: 0,
+    tx: 0, ty: 0, // 目标位置
+    w: 25, h: 20,
+    hue: 190,
+    color: '',
+    speed: 0.08 // 跟随平滑度
+};
+
+const milestones = [
+    { s: 10, name: "灵活小鱼", scale: 1.4 },
+    { s: 30, name: "深海猎手", scale: 2.1 },
+    { s: 60, name: "霸主形态", scale: 3.5 },
+    { s: 100, name: "进化成神", scale: 5.5 }
+];
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// 核心：指哪走哪的输入监听
+const setTarget = (e) => {
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    player.tx = x;
+    player.ty = y;
+};
+window.addEventListener('mousedown', setTarget);
+window.addEventListener('mousemove', (e) => { if(e.buttons > 0) setTarget(e); });
+window.addEventListener('touchstart', setTarget);
+window.addEventListener('touchmove', setTarget);
+
+function showStartMenu() {
+    document.getElementById('restart-menu').style.display = 'none';
+    document.getElementById('start-menu').style.display = 'flex';
+}
+
+function initGame(diff) {
+    state.score = 0;
+    state.difficulty = diff;
+    state.enemies = [];
+    state.isRunning = true;
+    
+    player.w = 25; player.h = 20;
+    player.hue = 190;
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+    player.tx = player.x;
+    player.ty = player.y;
+
+    document.getElementById('start-menu').style.display = 'none';
+    document.getElementById('restart-menu').style.display = 'none';
+    document.getElementById('score-display').innerText = `积分: 0 / 100`;
+    logsEl.innerHTML = '';
+    
+    if(state.animId) cancelAnimationFrame(state.animId);
+    loop();
+}
+
+function updateScore() {
+    state.score++;
+    document.getElementById('score-display').innerText = `积分: ${state.score} / 100`;
+    
+    // 即时变色：每吃一条色相偏转10度
+    player.hue = (190 + state.score * 10) % 360;
+    player.color = `hsl(${player.hue}, 80%, 60%)`;
+
+    // 检查里程碑记录
+    milestones.forEach(m => {
+        if(state.score === m.s) {
+            const entry = document.createElement('div');
+            entry.className = 'log-item highlight';
+            entry.innerText = `● 达成: ${m.name}`;
+            logsEl.prepend(entry);
+            
+            // 体型永久变大
+            player.w = 25 * m.scale;
+            player.h = 20 * m.scale;
+
+            if(state.score >= 100) gameOver(true);
+        }
+    });
+}
+
+function spawnEnemy() {
+    if(!state.isRunning) return;
+    const size = 10 + Math.random() * (player.w * 1.5);
+    state.enemies.push({
+        x: Math.random() * canvas.width,
+        y: -50,
+        w: size, h: size * 0.7,
+        vy: (2 + Math.random() * 2) * state.difficulty,
+        hue: Math.random() * 360
+    });
+}
+let spawnTimer = setInterval(spawnEnemy, 800);
+
+function gameOver(isWin) {
+    state.isRunning = false;
+    const menu = document.getElementById('restart-menu');
+    menu.style.display = 'flex';
+    document.getElementById('result-text').innerText = isWin ? "进化成功！" : "被吞噬了";
+    document.getElementById('result-text').style.color = isWin ? "#00f2ff" : "#ff4d4d";
+    document.getElementById('final-score').innerText = `最终进化积分: ${state.score}`;
+}
+
+function drawFish(f, isPlayer) {
+    ctx.save();
+    ctx.translate(f.x, f.y);
+    
+    // 自动转向：根据移动方向或目标方向旋转
+    const dx = isPlayer ? (player.tx - player.x) : 0;
+    const dy = isPlayer ? (player.ty - player.y) : 1;
+    const angle = Math.atan2(dy, dx);
+    ctx.rotate(angle);
+
+    ctx.fillStyle = isPlayer ? player.color : `hsl(${f.hue}, 60%, 50%)`;
+    
+    // 像素身体
+    ctx.fillRect(-f.w/2, -f.h/2, f.w, f.h);
+    // 尾巴
+    ctx.beginPath();
+    ctx.moveTo(-f.w/2, 0);
+    ctx.lineTo(-f.w*0.9, -f.h/2);
+    ctx.lineTo(-f.w*0.9, f.h/2);
+    ctx.fill();
+    // 眼睛
+    ctx.fillStyle = "white";
+    ctx.fillRect(f.w/4, -f.h/4, f.w/5, f.w/5);
+    
+    ctx.restore();
+}
+
+function loop() {
+    if(!state.isRunning && state.score < 100) return;
+
+    // 深海背景
+    ctx.fillStyle = '#020b1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制装饰泡泡
+    ctx.fillStyle = "rgba(255,255,255,0.1)";
+    for(let i=0; i<10; i++){
+        const bx = (Math.sin(Date.now()/1000 + i)*canvas.width/2) + canvas.width/2;
+        const by = (i*200 + Date.now()/10) % canvas.height;
+        ctx.fillRect(bx, by, 2, 2);
+    }
+
+    // 玩家平滑跟随：指哪走哪
+    player.x += (player.tx - player.x) * player.speed;
+    player.y += (player.ty - player.y) * player.speed;
+    drawFish(player, true);
+
+    // 敌鱼处理
+    for (let i = state.enemies.length - 1; i >= 0; i--) {
+        let e = state.enemies[i];
+        e.y += e.vy; // 敌鱼向下游动
+
+        // 碰撞检测
+        const dist = Math.hypot(player.x - e.x, player.y - e.y);
+        if (dist < (player.w/2 + e.w/2) * 0.8) {
+            if (player.w >= e.w) {
+                state.enemies.splice(i, 1);
+                updateScore();
+            } else {
+                gameOver(false);
+            }
+            continue;
+        }
+
+        drawFish(e, false);
+        if (e.y > canvas.height + 100) state.enemies.splice(i, 1);
+    }
+
+    state.animId = requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
