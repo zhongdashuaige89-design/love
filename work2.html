@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>综合职场性价比与内耗评估系统 V2.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f3f4f6; }
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.8s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        input[type="range"] { accent-color: #3b82f6; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+<div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="bg-indigo-600 p-6 text-white text-center">
+        <h1 class="text-3xl font-bold mb-2">📊 职场综合性价比与内耗评估系统 (Pro版)</h1>
+        <p class="text-indigo-100">引入生活成本、稳定度与通勤折损，全方位测算你的“打工牛马指数”</p>
+    </div>
+
+    <div class="p-6 md:p-8">
+        <form id="assessmentForm">
+            <h2 class="text-xl font-bold border-b-2 border-indigo-500 pb-2 mb-4 text-gray-800">模块一：客观岗位属性 (基础数据)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">税前月薪 (元)</label>
+                    <input type="number" id="salary" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="例如：12000" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">每周工作时长 (小时)</label>
+                    <input type="number" id="hours" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="例如：45" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">每周工作天数</label>
+                    <input type="number" id="workDays" step="0.5" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="例如：5 或 5.5" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">单程通勤时间 (分钟)</label>
+                    <input type="number" id="commute" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="例如：60" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">工作年限 (年)</label>
+                    <input type="number" id="experience" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="例如：3" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">个人最高学历</label>
+                    <select id="education" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="1">大专及以下</option>
+                        <option value="2">本科</option>
+                        <option value="3">硕士及以上</option>
+                    </select>
+                </div>
+            </div>
+
+            <h2 class="text-xl font-bold border-b-2 border-indigo-500 pb-2 mb-4 text-gray-800">模块二：环境与购买力变量 (进阶)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">所在城市生活成本 (影响实际购买力)</label>
+                    <select id="costOfLiving" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="1">一线城市 (北上广深 - 生活成本极高)</option>
+                        <option value="2">新一线/二线城市 (杭州/成都/武汉等)</option>
+                        <option value="3">三四线及以下城市 (生活成本较低)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">是否在老家工作？</label>
+                    <select id="isHometown" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="yes">是 (有家人照应，无/低房租压力)</option>
+                        <option value="no">否 (异地打拼，需付房租及生活全款)</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">职业稳定程度 (1-10分)</label>
+                    <input type="range" id="stability" min="1" max="10" value="5" class="w-full" oninput="document.getElementById('stabVal').innerText = this.value">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>1 = 随时裁员/初创不稳</span>
+                        <span>当前: <span id="stabVal" class="font-bold text-indigo-600 text-sm">5</span> 分</span>
+                        <span>10 = 稳如泰山/体制内铁饭碗</span>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">工作环境恶劣度 (包含物理环境、领导甩锅、PUA等) (1-10分)</label>
+                    <input type="range" id="environment" min="1" max="10" value="5" class="w-full" oninput="document.getElementById('envVal').innerText = this.value">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>1 = 神仙团队/环境极好</span>
+                        <span>当前: <span id="envVal" class="font-bold text-red-500 text-sm">5</span> 分</span>
+                        <span>10 = 职场霸凌/惨绝人寰</span>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="text-xl font-bold border-b-2 border-indigo-500 pb-2 mb-4 text-gray-800">模块三：职场内耗量表 (主观感受)</h2>
+            <p class="text-sm text-gray-500 mb-4">请依照您最近3个月的真实状态作答（1分＝完全没有，5分＝几乎每天）。</p>
+            
+            <div class="space-y-4 mb-8">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">1. 我下班后仍反复想着工作的事，难以真正休息。</label>
+                    <input type="range" id="q1" min="1" max="5" value="3" class="w-full" oninput="document.getElementById('q1Val').innerText = this.value">
+                    <div class="text-right text-sm text-gray-500">评分：<span id="q1Val" class="font-bold">3</span></div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">2. 我需要花很多力气维持“看起来没事”的状态。</label>
+                    <input type="range" id="q2" min="1" max="5" value="3" class="w-full" oninput="document.getElementById('q2Val').innerText = this.value">
+                    <div class="text-right text-sm text-gray-500">评分：<span id="q2Val" class="font-bold">3</span></div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">3. 我开始怀疑自己的能力，甚至产生自我否定。</label>
+                    <input type="range" id="q3" min="1" max="5" value="3" class="w-full" oninput="document.getElementById('q3Val').innerText = this.value">
+                    <div class="text-right text-sm text-gray-500">评分：<span id="q3Val" class="font-bold">3</span></div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">4. 遇到周日晚上，我的情绪就明显下滑（周一综合症）。</label>
+                    <input type="range" id="q4" min="1" max="5" value="3" class="w-full" oninput="document.getElementById('q4Val').innerText = this.value">
+                    <div class="text-right text-sm text-gray-500">评分：<span id="q4Val" class="font-bold">3</span></div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">5. 我留在这个公司的理由，多半是“怕外面也没有更好的”。</label>
+                    <input type="range" id="q5" min="1" max="5" value="3" class="w-full" oninput="document.getElementById('q5Val').innerText = this.value">
+                    <div class="text-right text-sm text-gray-500">评分：<span id="q5Val" class="font-bold">3</span></div>
+                </div>
+            </div>
+
+            <button type="button" onclick="calculateResult()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 text-lg shadow-lg">
+                生成深度诊断报告
+            </button>
+        </form>
+    </div>
+
+    <div id="resultArea" class="hidden bg-gray-900 text-white p-6 md:p-8 fade-in">
+        <h2 class="text-2xl font-bold mb-6 text-center text-yellow-400">📝 深度诊断结果</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-800 p-5 rounded-lg border-l-4 border-indigo-400 relative overflow-hidden">
+                <h3 class="text-lg font-semibold text-indigo-300 mb-1">客观性价比得分 (Job Worth)</h3>
+                <div class="text-5xl font-bold" id="worthScoreDisplay">0</div>
+                <div class="text-sm text-gray-400 mt-2">满分100。已包含生活成本购买力折算、通勤/天数折损与稳定性加成。</div>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-lg border-l-4 border-pink-500 relative overflow-hidden">
+                <h3 class="text-lg font-semibold text-pink-300 mb-1">主观内耗指数 (Burnout)</h3>
+                <div class="text-5xl font-bold" id="burnoutScoreDisplay">0</div>
+                <div class="text-sm text-gray-400 mt-2">满分25。数值越高，代表您的心理资源透支越严重。</div>
+            </div>
+        </div>
+
+        <div class="bg-gray-100 text-gray-800 p-6 rounded-lg mb-6 shadow-inner">
+            <h3 class="text-xl font-bold mb-3 text-indigo-900 border-b pb-2">💡 专家级系统诊断</h3>
+            <div id="diagnosisTitle" class="text-xl mb-4 font-bold"></div>
+            <div id="diagnosisDetail" class="text-md mb-4 text-gray-700 leading-relaxed"></div>
+            
+            <h4 class="font-bold text-gray-900 mb-2">🔥 破局行动建议：</h4>
+            <ul id="actionPlan" class="list-disc pl-5 space-y-2 text-gray-700">
+                </ul>
+        </div>
+        
+        <button onclick="location.reload()" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg transition duration-300">重新测试</button>
+    </div>
+</div>
+
+<script>
+    function calculateResult() {
+        // 1. 获取输入数据
+        let salary = parseFloat(document.getElementById('salary').value) || 0;
+        let hours = parseFloat(document.getElementById('hours').value) || 0;
+        let workDays = parseFloat(document.getElementById('workDays').value) || 5;
+        let commute = parseFloat(document.getElementById('commute').value) || 0;
+        let experience = parseFloat(document.getElementById('experience').value) || 0;
+        
+        let education = parseInt(document.getElementById('education').value);
+        let costOfLiving = document.getElementById('costOfLiving').value;
+        let isHometown = document.getElementById('isHometown').value;
+        let stability = parseInt(document.getElementById('stability').value);
+        let env = parseInt(document.getElementById('environment').value);
+
+        if (salary === 0 || hours === 0) {
+            alert("请至少填入月薪和工作时长，以便系统进行计算。");
+            return;
+        }
+
+        // 2. 计算客观性价比得分 (Job Worth Score)
+        // A. 购买力平价系数 (一线城市物价高，薪资实际购买力打折)
+        let colMultiplier = {"1": 0.75, "2": 0.9, "3": 1.1}[costOfLiving]; 
+        
+        // B. 计算调整后的时薪
+        let hourlyWage = salary / (hours * 4.3); 
+        let adjustedHourlyWage = hourlyWage * colMultiplier;
+        
+        // C. 基础薪资分 (假设调整后时薪60为及格线，占总分50)
+        let wageScore = Math.min((adjustedHourlyWage / 60) * 50, 60); 
+
+        // D. 各种折损与加成因子
+        // 工作天数惩罚：超过5天，每多半天严重扣分 (单休极大破坏生活质量)
+        let daysPenalty = workDays > 5 ? (workDays - 5) * 8 : 0; 
+        
+        // 通勤惩罚：单程每增加10分钟扣1分
+        let commutePenalty = Math.min((commute / 10) * 1, 15); 
+        
+        // 环境惩罚：恶劣环境每1分扣1.5分
+        let envPenalty = env * 1.5; 
+        
+        // 稳定性加成：5分为中界限，向上加分，向下扣分
+        let stabilityBonus = (stability - 5) * 1.5; 
+        
+        // 老家buff：在老家工作，生活成本低且有归属感，加分
+        let hometownBonus = (isHometown === 'yes') ? 8 : 0; 
+        let educationBonus = education * 2;
+
+        // 汇总总分
+        let totalWorthScore = Math.round(wageScore - daysPenalty - commutePenalty - envPenalty + stabilityBonus + hometownBonus + educationBonus + 20);
+        if(totalWorthScore > 100) totalWorthScore = 100;
+        if(totalWorthScore < 0) totalWorthScore = 0;
+
+        // 3. 计算内耗得分
+        let burnoutScore = 
+            parseInt(document.getElementById('q1').value) +
+            parseInt(document.getElementById('q2').value) +
+            parseInt(document.getElementById('q3').value) +
+            parseInt(document.getElementById('q4').value) +
+            parseInt(document.getElementById('q5').value);
+
+        // 4. 渲染UI
+        document.getElementById('worthScoreDisplay').innerText = totalWorthScore;
+        document.getElementById('burnoutScoreDisplay').innerText = burnoutScore;
+
+        // 颜色反馈
+        document.getElementById('worthScoreDisplay').className = `text-5xl font-bold ${totalWorthScore >= 70 ? 'text-green-400' : (totalWorthScore >= 50 ? 'text-yellow-400' : 'text-red-400')}`;
+        document.getElementById('burnoutScoreDisplay').className = `text-5xl font-bold ${burnoutScore >= 18 ? 'text-red-500' : (burnoutScore >= 12 ? 'text-yellow-500' : 'text-green-500')}`;
+
+        // 5. 交叉分析与诊断逻辑
+        let diagTitle = "";
+        let diagDetail = "";
+        let actionHTML = "";
+
+        // 根据工龄构建话术前缀
+        let expPrefix = experience < 2 ? "作为职场新人，" : (experience > 7 ? "作为资深职场人，" : "现阶段，");
+
+        if (burnoutScore >= 18) {
+            // 深度内耗
+            if (totalWorthScore > 65) {
+                diagTitle = "🚨 诊断状态：【高薪围城 / 金手铐综合症】";
+                diagDetail = `${expPrefix}这份工作虽然在客观购买力和稳定性上给了你相对体面的回报，但极度恶劣的环境或高压正在摧毁你的身心健康。你被“金手铐”锁住了。`;
+                actionHTML += "<li><strong>建立心理护城河：</strong>薪资中包含了精神损失费。不要把个人价值与领导的PUA挂钩，学会“课题分离”。</li>";
+                actionHTML += "<li><strong>资产转化：</strong>用高薪去购买能让你真正放松的服务（如心理咨询、按摩、家政），保证自己不被彻底耗干。</li>";
+                if(stability > 7) actionHTML += "<li><strong>警惕体制化：</strong>高稳定度让你更不敢离开，建议用业余时间探索副业，找回掌控感。</li>";
+            } else {
+                diagTitle = "☣️ 诊断状态：【纯血牛马 / 极致拉扯】";
+                diagDetail = `${expPrefix}系统为您亮起了红灯！这份工作性价比极低，钱少事多离家远，且你的心理内耗已经到了危险边缘。留在这里完全是沉没成本在作祟。`;
+                actionHTML += "<li><strong>止损是最高级的智慧：</strong>立刻开启“骑驴找马”模式，本周末必须更新简历。</li>";
+                actionHTML += "<li><strong>能量保护：</strong>在职期间开启“静音模式”，只做及格线上的工作，省下精力应对面试。</li>";
+                if(isHometown === 'no') actionHTML += "<li><strong>重新评估城市选择：</strong>异地打拼成本高昂且无支持系统，或许退守二线或回老家蓄力是一个理智的选项。</li>";
+            }
+        } else if (burnoutScore >= 12 && burnoutScore < 18) {
+            // 中度内耗 / 疲倦
+            if (totalWorthScore < 50) {
+                diagTitle = "🍄 诊断状态：【职场温水青蛙 / 蘑菇期】";
+                diagDetail = `${expPrefix}你目前处于“食之无味，弃之可惜”的尴尬期。工作回报率不高，偶尔让你心累，但还没到逼你掀桌子的程度。`;
+                if (experience <= 3) {
+                    actionHTML += "<li><strong>蛰伏与吸收：</strong>这可能是新人的必经“蘑菇期”，先聚焦于核心技能的提升，用能力换取未来的谈判筹码。</li>";
+                } else {
+                    actionHTML += "<li><strong>打破路径依赖：</strong>你的舒适区正在变成贬值区。每个月安排一次对外的行业交流或面试，摸清自己的市场底牌。</li>";
+                }
+                if (workDays > 5) actionHTML += "<li><strong>单休的隐性伤害：</strong>长期单休会剥夺深度思考的时间，请尽量在工作中“摸鱼”回血。</li>";
+            } else {
+                diagTitle = "⚖️ 诊断状态：【动态平衡 / 尚可忍受】";
+                diagDetail = `${expPrefix}这份工作整体处于及格线以上。虽然时常有职业倦怠，但客观的回报（薪资/稳定性/通勤）让你觉得“还能再苟一苟”。`;
+                actionHTML += "<li><strong>向上管理：</strong>环境的分数可能拖了后腿。尝试跟上级沟通，看能否优化工作流程，减少无意义的加班或内耗。</li>";
+                actionHTML += "<li><strong>生活配重：</strong>工作无法给你全部的成就感，建议在工作之外寻找热爱，比如健身、艺术或开源项目。</li>";
+            }
+        } else {
+            // 状态极佳
+            if (totalWorthScore > 75) {
+                diagTitle = "🚀 诊断状态：【爽到起飞的职场天选】";
+                diagDetail = `${expPrefix}恭喜你！在当前的打工环境中，你属于罕见的极少数。高性价比、极低的内耗，你的工作状态非常棒。`;
+                actionHTML += "<li><strong>乘胜追击：</strong>在精力充沛时，主动承担核心项目，向更高的职级或薪水发起冲击。</li>";
+                actionHTML += "<li><strong>建立护城河：</strong>好环境有时是脆弱的（比如换了领导），趁现在多积累行业人脉和不可替代的技术。</li>";
+            } else {
+                diagTitle = "☕ 诊断状态：【岁月静好 / 佛系躺平】";
+                diagDetail = `${expPrefix}虽然客观性价比算不上顶级，但你心态超好，完全没有精神内耗。工作对你来说只是赚钱的工具，绝不干涉生活。`;
+                actionHTML += "<li><strong>享受当下：</strong>保持这种难得的松弛感，非常适合人生过渡期、备考期或需要兼顾家庭的阶段。</li>";
+                if(stability < 6) actionHTML += "<li><strong>未雨绸缪：</strong>如果稳定性不高，需警惕裁员风险，建议每个月存下一笔“F*** you money”。</li>";
+            }
+        }
+
+        document.getElementById('diagnosisTitle').innerText = diagTitle;
+        document.getElementById('diagnosisDetail').innerText = diagDetail;
+        document.getElementById('actionPlan').innerHTML = actionHTML;
+
+        // 切换视图
+        document.getElementById('assessmentForm').classList.add('hidden');
+        document.getElementById('resultArea').classList.remove('hidden');
+    }
+</script>
+</body>
+</html>
